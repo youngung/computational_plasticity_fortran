@@ -3,7 +3,7 @@ c     E as a function of time
       implicit none
       real l0, vel, dt, t, eps
 c     inputs
-      l0=1                      ! [mm]
+      l0=1.                      ! [mm]
       vel=0.1                   ! [mm/s]
       dt=0.1
       t=0.
@@ -20,6 +20,6 @@ c     analytical function eps as function of t
       real function eps(l0,vel,t)
       implicit none
       real vel,t,l0
-      eps=log(l0+vel*t)
+      eps=log(l0+vel*t) - log (l0)
       return
       end function
