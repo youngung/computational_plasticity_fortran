@@ -12,22 +12,24 @@ c     --------------------------------------------
       program elasto_plasticity_scalar
       implicit none
       real calc_yield_function
-      real dt, E, c, t, l, dl, eps, deps, deps_el, deps_pl,dsig,
-     $     stress
+      real dt, E, c, t, l, dl, eps, deps, deps_el, deps_pl, dsig,
+     $     eps_el, eps_pl, stress
       real vel, f, tol
       integer kount,iplast
       parameter(tol=1e-6)
 
       open(3,file='elasto_plasticity_scalar.txt')
-      dt = 0.023                  ! time increment
+      dt = 0.03                  ! time increment
       E = 200000                ! elastic modulus
-      c = 200.                   ! yield criterion
+      c = 200.                  ! yield criterion
       stress = 0.               ! initial stress
       eps = 0.                  ! initial strain
+      eps_el = 0.               ! initial el strain
+      eps_pl = 0.               ! initial pl strain
       l = 1.                    ! initial length
       t = 0.                    ! initial time
       do while(t<1.0)
-c     Loading condition 1
+c        Loading condition 1
          if (t.le.0.25) then
             vel = 0.01
          elseif (t.gt.0.25.and.t.le.0.55) then
@@ -35,6 +37,7 @@ c     Loading condition 1
          else
             vel = 0.01
          endif
+c        end of loading condition
          dl = vel * dt
          deps = dl / l
 c        initially assuming all strain is elastic
@@ -47,16 +50,21 @@ c        guess on stress increment
          iplast=0
          do while (f.gt.tol.and.kount.lt.3) ! if exceeding plastic onset
             iplast=1
+c           New plastic strain increment
+            deps_pl = deps_pl - f/(-E)*sign(1.,deps)
+c           New elastic strain increment
             deps_el = deps - deps_pl
+c           New stress increment
             dsig = e * deps_el
             f = calc_yield_function(stress+dsig) - c
-c           estimate new plastic increment
-            deps_pl = deps_pl - f/(-E)*sign(1.,deps)
             kount = kount +1
          enddo
-         write(3,'(2f9.4,f10.6,f10.2,2i2)')t,l,eps,stress,iplast,kount
+         write(3,'(2f9.4,f10.6,f10.2,2f10.6,2i2)')
+     $        t,l,eps,stress,eps_el,eps_pl,iplast,kount ! write before update
          stress = stress + dsig
          eps = eps + deps
+         eps_el = eps_el + deps_el
+         eps_pl = eps_pl + deps_pl
          t = t + dt
          l = l + dl
       enddo
